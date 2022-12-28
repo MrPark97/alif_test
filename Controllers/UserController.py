@@ -23,19 +23,17 @@ class UserController(object):
                                     'living_region': pd.Series(dtype='object'),
                                     'monthly_income': pd.Series(dtype='float64'),
                                     'credit_count': pd.Series(dtype='float64'),
-                                    'overdue_credit_count': pd.Series(dtype='float64')},
-                                   index=['client_id'])
+                                    'overdue_credit_count': pd.Series(dtype='float64')})
 
         new_row = {}
         for col in credit_test.columns:
             new_row[col] = getattr(self.user, col)
 
-        if 'living_region' not in self.districts_map:
+        if self.user.living_region not in self.districts_map:
             new_row['living_region'] = list(self.districts_map.values())[0]
         if self.user.education not in self.education_list:
             new_row['education'] = 'SCH'
-
-        pd.DataFrame(new_row, index=['client_id'])
+        credit_test.loc[0] = new_row.values()
 
         credit_test["living_region"] = credit_test["living_region"].astype("category")
         credit_test["tariff_id"] = credit_test["tariff_id"].astype("category")
@@ -47,7 +45,8 @@ class UserController(object):
         try:
             x_test = credit_test.drop('client_id', axis=1)
             gbm = lgb.Booster(model_file='static/models/model.txt')
-
+            print(x_test)
+            print(gbm.predict(x_test))
             prediction = gbm.predict(x_test)[0]
             return prediction
         except:
